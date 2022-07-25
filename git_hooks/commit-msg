@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+
+'''
+Validates the commit message with so that it matches
+
+[san] My commit message is valid
+Commit description
+on multiple
+lines
+
+#123
+'''
+
+import pathlib
+import re
+import sys
+
+
+commit = pathlib.Path(sys.argv[1]).read_text()
+
+if not re.search(r"\[(san|feat|fix)\] .{10,50}(\n.*)+", commit):
+    sys.exit(1)

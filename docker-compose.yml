@@ -1,0 +1,8 @@
+version: '3.7'
+
+services:
+  app:
+    image: docker.io/requests_har:1.0.0
+    container_name: requests_har
+    volumes:
+      - ./synced:/synced
