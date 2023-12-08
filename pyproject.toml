@@ -12,6 +12,7 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
 ]
+repository = "https://github.com/sbordeyne/requests_har"
 
 [tool.poetry.dependencies]
 python = "^3.8"
