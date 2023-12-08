@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "requests_har"
-version = "1.0.0"
+version = "1.1.0"
 description = "HAR hook for the requests library"
 authors = ["Dogeek <simon.bordeyne@gmail.com>"]
 license = "MIT"
