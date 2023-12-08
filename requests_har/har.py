@@ -189,11 +189,12 @@ def format_request(request: PreparedRequest, http_version: str) -> HARRequest:
     :return: The serialized request in the HAR format
     :rtype: HARRequest
     """
+    cookie_jar: cookiejar.CookieJar = getattr(request, "_cookies", [])
     data = {
         "method": request.method,
         "url": request.url,
         "httpVersion": http_version,
-        "cookies": [format_cookie(cookie) for cookie in request._cookies],
+        "cookies": [format_cookie(cookie) for cookie in cookie_jar],
         "headers": [
             format_header(name, value) for name, value in request.headers.items()
         ],
