@@ -18,6 +18,11 @@ repository = "https://github.com/sbordeyne/requests_har"
 python = "^3.8"
 requests = "^2.28.1"
 
+[tool.poetry.group.dev.dependencies]
+black = "^23.11.0"
+mypy = "^1.7.1"
+types-requests = "^2.31.0.10"
+
 [tool.poe.tasks]
 add_changelog  = { script = "scripts.add_changelog:main" }
 

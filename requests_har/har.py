@@ -10,10 +10,13 @@ from cgi import parse_header
 from collections import OrderedDict
 from datetime import datetime
 from http import cookiejar, HTTPStatus
-from typing import Dict, List, Union
+from typing import Iterable, List, Optional, Union
 from urllib.parse import parse_qsl, urlsplit
 
-from requests import PreparedRequest, Response, __version__ as requests_version
+from requests import (
+    PreparedRequest, Response,
+    __version__ as requests_version, structures,
+)
 
 from requests_har import __version__
 from requests_har.types import (
@@ -38,14 +41,15 @@ def has_http_only(cookie: cookiejar.Cookie) -> bool:
     :return: Whether the cookie has the HttpOnly flag set
     :rtype: bool
     """
-    extra_args = vars(cookie).get("_rest")
+    extra_args: List[str] = vars(cookie).get("_rest", [])
     for key in extra_args:
         if key.lower() == "httponly":
             return True
     return False
 
 
-def get_charset(headers: dict) -> str:
+
+def get_charset(headers: structures.CaseInsensitiveDict[str]) -> str:
     """
     Returns the charset of the response from the response headers.
 
@@ -85,14 +89,18 @@ def format_cookie(cookie: cookiejar.Cookie) -> HARCookie:
     :return: The dict representing the cookie in the HAR format
     :rtype: ParsedCookie
     """
+    expires = ""
+    if cookie.expires:
+        expires = datetime.fromtimestamp(cookie.expires).isoformat()
+
     return {
         "name": cookie.name,
         "value": cookie.value,
         "path": cookie.path,
         "domain": cookie.domain,
-        "expires": datetime.fromtimestamp(cookie.expires).isoformat(),
+        "expires": expires,
         "secure": cookie.secure,
-        "comment": cookie.comment,
+        "comment": cookie.comment or "",
     }
 
 
@@ -114,6 +122,39 @@ def format_header(name: str, value: str) -> HARHeader:
     }
 
 
+def decode_data(
+    data: Union[memoryview, bytes, bytearray, str, None],
+    charset: str = "utf-8",
+) -> str:
+    """
+    Decodes data into a string based on the provided charset.
+
+    :param data: The data to decode
+    :type data: Union[memoryview, bytes, bytearray, str, None]
+    :param charset: The charset to use when decoding the data
+    :type charset: str
+    :return: The decoded data
+    :rtype: str
+    """
+    data_bytes: Optional[bytes] = None
+    if isinstance(data, bytes):
+        data_bytes = data
+    elif isinstance(data, memoryview):
+        data_bytes = data.tobytes()
+    elif isinstance(data, bytearray):
+        data_bytes = bytes(data)
+    elif isinstance(data, str):
+        return data
+    elif data is None:
+        return ""
+    if data_bytes is None:
+        raise ValueError("data must be a bytes-like object")
+    try:
+        return data_bytes.decode(charset)
+    except UnicodeDecodeError:
+        return ""
+
+
 def format_post_data(request: PreparedRequest) -> HARPostData:
     """
     Formats a POST request's body into a serializable dict for the HAR format.
@@ -123,13 +164,8 @@ def format_post_data(request: PreparedRequest) -> HARPostData:
     :return: _description_
     :rtype: _type_
     """
-    body = request.body
-    if isinstance(body, bytes):
-        charset = get_charset(request.headers)
-        try:
-            body = body.decode(charset)
-        except UnicodeDecodeError:
-            body = ""
+    charset = get_charset(request.headers)
+    body = decode_data(request.body, charset)
     return {
         "mimeType": request.headers.get("Content-Type", "application/json"),
         "params": [],
@@ -137,7 +173,7 @@ def format_post_data(request: PreparedRequest) -> HARPostData:
     }
 
 
-def get_header_size(headers: Dict[str, str]) -> int:
+def get_header_size(headers: structures.CaseInsensitiveDict[str]) -> int:
     """
     Computes the length of the headers.
 
@@ -166,10 +202,9 @@ def format_response_content(response: Response) -> HARResponseContent:
     :return: _description_
     :rtype: HARResponseContent
     """
-    content = response.content
-    if isinstance(content, bytes):
-        charset = get_charset(response.headers)
-        content = content.decode(charset)
+    charset = get_charset(response.headers)
+    content = decode_data(response.content, charset)
+
     return {
         "size": len(response.content) if response.content is not None else -1,
         "mimeType": response.headers["Content-Type"],
@@ -189,19 +224,20 @@ def format_request(request: PreparedRequest, http_version: str) -> HARRequest:
     :return: The serialized request in the HAR format
     :rtype: HARRequest
     """
-    cookie_jar: cookiejar.CookieJar = getattr(request, "_cookies", [])
-    data = {
-        "method": request.method,
-        "url": request.url,
+    cookie_jar: Iterable[cookiejar.Cookie] = getattr(request, "_cookies", [])
+    data: HARRequest = {
+        "method": request.method or "GET",
+        "url": request.url or "",
         "httpVersion": http_version,
         "cookies": [format_cookie(cookie) for cookie in cookie_jar],
         "headers": [
             format_header(name, value) for name, value in request.headers.items()
         ],
-        "queryString": format_query(request.url),
+        "queryString": format_query(request.url or ""),
         "headersSize": get_header_size(request.headers),
         "bodySize": len(request.body) if request.body is not None else -1,
         "comment": "",
+        "postData": None,
     }
     if request.body:
         data["postData"] = format_post_data(request)
@@ -219,7 +255,7 @@ def format_response(response: Response, http_version: str) -> HARResponse:
     :return: The serialized response in the HAR format
     :rtype: HARResponse
     """
-    data = {
+    return {
         "status": response.status_code,
         "statusText": HTTPStatus(response.status_code).name,
         "httpVersion": http_version,
@@ -233,7 +269,6 @@ def format_response(response: Response, http_version: str) -> HARResponse:
         "bodySize": len(response.content) if response.content is not None else -1,
         "comment": "",
     }
-    return data
 
 
 class HarDict(dict):
@@ -264,7 +299,7 @@ class HarDict(dict):
         response: Response,
         timeout: int | None = None,
         verify: bool = True,
-        proxies: OrderedDict = None,
+        proxies: Optional[OrderedDict] = None,
         stream: bool = False,
         cert: str | None = None,
     ):

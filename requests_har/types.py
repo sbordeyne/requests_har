@@ -14,7 +14,6 @@ class HARCookie(TypedDict):
     path: str
     domain: str
     expires: str
-    httpOnly: bool
     secure: bool
     comment: str
 
@@ -47,7 +46,6 @@ class HARPostData(TypedDict):
     mimeType: str
     params: list[HARQueryParam]
     text: str
-    comment: str
 
 
 class HARRequest(TypedDict):
