@@ -10,7 +10,7 @@ from cgi import parse_header
 from collections import OrderedDict
 from datetime import datetime
 from http import cookiejar, HTTPStatus
-from typing import Dict, List
+from typing import Dict, List, Union
 from urllib.parse import parse_qsl, urlsplit
 
 from requests import PreparedRequest, Response, __version__ as requests_version
@@ -292,7 +292,8 @@ class HarDict(dict):
                 "afterRequest": None,
             },
             "timings": {
-                "send": 0,
+                "send": response.elapsed.total_seconds(),
+                # Requests is synchronous, so this is always 0, we don't wait for other requests
                 "wait": 0,
             },
             "_timeout": timeout,
@@ -303,13 +304,15 @@ class HarDict(dict):
         }
         self["log"]["entries"].append(entry)
 
-    def save(self, path: pathlib.Path) -> pathlib.Path:
+    def save(self, path: Union[pathlib.Path, str], encoding="utf-8") -> pathlib.Path:
         """Saves the contents of this dict to the disk as JSON."""
+        path = pathlib.Path(path)
+
         if path.is_dir():
             raise ValueError("path must be a file, not a directory")
 
         if path.suffix != ".har":
             path = path.with_suffix(".har")
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(self, indent=2))
+        path.write_text(json.dumps(self, indent=2), encoding=encoding)
         return path
