@@ -9,16 +9,14 @@ import pathlib
 from cgi import parse_header
 from collections import OrderedDict
 from datetime import datetime
-from http import cookiejar, HTTPStatus
+from http import HTTPStatus, cookiejar
 from typing import Iterable, List, Optional, Union
 from urllib.parse import parse_qsl, urlsplit
 
-from requests import (
-    PreparedRequest, Response,
-    __version__ as requests_version, structures,
-)
+from requests import PreparedRequest, Response
+from requests import __version__ as requests_version
+from requests import structures
 
-from requests_har import __version__
 from requests_har.types import (
     HARCookie,
     HAREntry,
@@ -30,6 +28,7 @@ from requests_har.types import (
     HARResponse,
     HARResponseContent,
 )
+from requests_har.version import __version__
 
 
 def has_http_only(cookie: cookiejar.Cookie) -> bool:
@@ -46,7 +45,6 @@ def has_http_only(cookie: cookiejar.Cookie) -> bool:
         if key.lower() == "httponly":
             return True
     return False
-
 
 
 def get_charset(headers: structures.CaseInsensitiveDict[str]) -> str:
@@ -302,7 +300,7 @@ class HarDict(dict):
         proxies: Optional[OrderedDict] = None,
         stream: bool = False,
         cert: str | None = None,
-    ):
+    ):  # pylint: disable=too-many-arguments
         """
         Method designed to be used as a response hook
         for the python requests library

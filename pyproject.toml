@@ -22,6 +22,9 @@ requests = "^2.28.1"
 black = "^23.11.0"
 mypy = "^1.7.1"
 types-requests = "^2.31.0.10"
+pylint = "^3.0.2"
+isort = "^5.12.0"
+pytest = "^7.4.3"
 
 [tool.poe.tasks]
 add_changelog  = { script = "scripts.add_changelog:main" }
@@ -40,22 +43,6 @@ sphinx = '*'
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.yapf]
-based_on_style = 'pep8'
-spaces_before_comment = 2
-split_before_logical_operator = true
-split_before_arithmetic_operator = true
-split_before_bitwise_operator = true
-split_complex_comprehension = true
-split_before_first_argument = true
-split_before_dot = true
-split_before_dict_set_operator = true
-split_before_closing_bracket = true
-each_dict_entry_on_separate_line = true
-dedent_closing_brackets = true
-column_limit = 119
-coalesce_brackets = true
 
 [tool.tbump]
 # Uncomment this if your project is hosted on GitHub:
@@ -94,3 +81,6 @@ cmd = "poetry publish --build"
 fix = "Bugfixes"
 feat = "New features"
 san = "Refactorings"
+
+[tool.isort]
+profile = "black"
