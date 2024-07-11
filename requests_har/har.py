@@ -6,7 +6,7 @@ the HTTP archive format.
 
 import json
 import pathlib
-from cgi import parse_header
+from email.message import EmailMessage
 from collections import OrderedDict
 from datetime import datetime
 from http import HTTPStatus, cookiejar
@@ -56,11 +56,10 @@ def get_charset(headers: structures.CaseInsensitiveDict[str]) -> str:
     :return: Charset of the response
     :rtype: str
     """
-    header = headers.get("Content-Type", "application/json; charset=utf-8")
-    parsed = parse_header(header)
-    if len(parsed) == 1:
-        return "utf-8"
-    return parsed[1].get("charset", "utf-8")
+    # alternative of cgi.parse_header() according to https://peps.python.org/pep-0594/#cgi
+    m = EmailMessage()
+    m['content-type'] = headers.get("Content-Type", "application/json; charset=utf-8")
+    return m.get_content_charset('utf-8')
 
 
 def format_query(url: str) -> List[HARQueryParam]:
