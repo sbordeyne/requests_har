@@ -8,7 +8,7 @@ import json
 import pathlib
 from email.message import EmailMessage
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from http import HTTPStatus, cookiejar
 from typing import Iterable, List, Optional, Union
 from urllib.parse import parse_qsl, urlsplit
@@ -204,7 +204,7 @@ def format_response_content(response: Response) -> HARResponseContent:
 
     return {
         "size": len(response.content) if response.content is not None else -1,
-        "mimeType": response.headers["Content-Type"],
+        "mimeType": response.headers.get("Content-Type", ""),
         "text": content,
         "comment": "",
     }
@@ -309,14 +309,15 @@ class HarDict(dict):
         """
         proxies = proxies or OrderedDict()
 
-        now = datetime.utcnow().isoformat(timespec="milliseconds")
+        now = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
         http_version: str = {10: "HTTP/1.0", 11: "HTTP/1.1"}.get(
             response.raw.version, "HTTP/1.1"
         )
+        elapsed = response.elapsed.total_seconds()
 
         entry: HAREntry = {
             "startedDateTime": now,
-            "time": 0,
+            "time": elapsed, # The time value for the request must be equal to the sum of the timings supplied in this section (excluding any -1 values).
             "request": format_request(response.request, http_version),
             "response": format_response(response, http_version),
             "cache": {
@@ -324,9 +325,9 @@ class HarDict(dict):
                 "afterRequest": None,
             },
             "timings": {
-                "send": response.elapsed.total_seconds(),
-                # Requests is synchronous, so this is always 0, we don't wait for other requests
+                "send": 0,
                 "wait": 0,
+                "receive": elapsed
             },
             "_timeout": timeout,
             "_verify": verify,
