@@ -276,7 +276,7 @@ class HarDict(dict):
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        self["log"]: HARLog = {
+        self["log"] = {
             "version": "1.2",
             "creator": {
                 "name": "requests-har",

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "requests_har"
-version = "1.1.0"
+version = "1.2.0"
 description = "HAR hook for the requests library"
 authors = ["Dogeek <simon.bordeyne@gmail.com>"]
 license = "MIT"
@@ -15,30 +15,20 @@ classifiers = [
 repository = "https://github.com/sbordeyne/requests_har"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 requests = "^2.28.1"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.11.0"
-mypy = "^1.7.1"
+black = "^25.1.0"
+mypy = "^1.14.1"
 types-requests = "^2.31.0.10"
-pylint = "^3.0.2"
-isort = "^5.12.0"
-pytest = "^7.4.3"
+pylint = "^3.3.4"
+isort = "^6.0.0"
+pytest = "^8.3.4"
 
 [tool.poe.tasks]
 add_changelog  = { script = "scripts.add_changelog:main" }
 
-[tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
-pylama = "^8.3.7"
-yapf = "^0.32.0"
-isort = "^5.10.1"
-requests = "^2.27.1"
-poethepoet = "^0.12.2"
-toml = "^0.10.2"
-tbump = "^6.7.0"
-sphinx = '*'
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
